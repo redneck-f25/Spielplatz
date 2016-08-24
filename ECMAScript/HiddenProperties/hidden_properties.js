@@ -20,7 +20,6 @@ class HiddenProperties extends Mixin {
     __HiddenProperties_wrapFunctions( methodNames, hiddenProperties ) {
         var [ me, prototype ] = [ this, Object.getPrototypeOf( this ) ];
         
-        this.timestamp = new Date();
         methodNames.forEach( ( name )=>{
             Object.defineProperty( me, name, { value: function() {
                 prototype[ name ].call( me, ...arguments, hiddenProperties );
@@ -38,7 +37,7 @@ class HiddenProperties extends Mixin {
 }
 
 class Class {
-	constructor() {
+    constructor() {
         var hiddenProperties = {
             answer: 42,
         };
@@ -48,6 +47,8 @@ class Class {
                 ],
                 hiddenProperties
                 );
+        
+        this.timestamp = new Date();
     }
     foobar( a, b ) {
         var [ a, b, additionalArguments, hiddenProperties ]
@@ -59,7 +60,6 @@ class Class {
         ++hiddenProperties.answer;
     }
 }
-
 HiddenProperties.__mixin__( Class );
 
 var instance = new Class();
@@ -69,5 +69,58 @@ instance.foobar( 1, 2, 3, 4 );
 instance.foobar( 5, 6, "A", "C", "A", "B" );
 instance.foobar( 7 );
 Class.prototype.foobar.call( instance, { answer: 'Got ya, bitch!' } );
+
+out( '---' );
+out( '--- There we go! ---' );
+out( '---' );
+
+class CustomError extends Error {
+    toString() {
+        return this.constructor.name + ( this.message ? ': ' + this.message : '' );
+    }
+}
+
+class IllegalAccessError extends CustomError {
+    constructor( message, fileName, lineNumber ) {
+        super( ...arguments );
+    }
+}
+
+class Class2 {
+    constructor() {
+        var hiddenProperties = {
+            answer: 42,
+        };
+        Object.defineProperties( this, {
+            [ Class2.prototype.foobar.name ]: { value: function foobar( a, b ) {
+                var additionalArguments = Array.prototype.splice.call(
+                        arguments, Class2.prototype.foobar.length );
+
+                var data = { a, b, additionalArguments, hiddenProperties };
+                out.json( data );
+                ++hiddenProperties.answer;
+            }},
+        });
+
+        (()=>{ // keep the closure cleen
+            this.timestamp = new Date();
+        })();
+    }
+    foobar( a, b ) {
+        throw new IllegalAccessError( 'Shoo!' );
+    }
+}
+
+var instance2 = new Class2();
+out.json( instance2 );
+instance2.foobar();
+instance2.foobar( 1, 2, 3, 4 );
+instance2.foobar( 5, 6, "A", "C", "A", "B" );
+instance2.foobar( 7 );
+try {
+    Class2.prototype.foobar.call( instance2, { answer: 'Got ya, bitch!' } );
+} catch ( error ) {
+    out( error );
+}
 
 });
