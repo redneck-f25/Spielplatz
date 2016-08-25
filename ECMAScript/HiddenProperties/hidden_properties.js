@@ -68,7 +68,7 @@ instance.foobar();
 instance.foobar( 1, 2, 3, 4 );
 instance.foobar( 5, 6, "A", "C", "A", "B" );
 instance.foobar( 7 );
-Class.prototype.foobar.call( instance, { answer: 'Got ya, bitch!' } );
+Class.prototype.foobar.call( instance, 'x', 'y', { answer: 'Got ya, bitch!' } );
 
 out( '---' );
 out( '--- There we go! ---' );
@@ -118,9 +118,63 @@ instance2.foobar( 1, 2, 3, 4 );
 instance2.foobar( 5, 6, "A", "C", "A", "B" );
 instance2.foobar( 7 );
 try {
-    Class2.prototype.foobar.call( instance2, { answer: 'Got ya, bitch!' } );
+    Class2.prototype.foobar.call( instance2, 'x', 'y', { answer: 'Got ya, bitch!' } );
 } catch ( error ) {
     out( error );
 }
+
+out( '---' );
+out( '--- Virtual Reality ---' );
+out( '---' );
+
+class Class3 {
+    constructor() {
+        var hiddenProperties = {
+            answer: 42,
+        };
+        Object.defineProperties( this, {
+            [ Class3.prototype.foobar.name ]: { value: function foobar( a, b ) {
+                var additionalArguments = Array.prototype.splice.call(
+                        arguments, Class3.prototype.foobar.length );
+
+                var data = { a, b, additionalArguments, hiddenProperties };
+                out.json( data );
+                ++hiddenProperties.answer;
+            }},
+        });
+
+        (()=>{ // keep the closure cleen
+            this.timestamp = new Date();
+        })();
+    }
+    foobar() {
+        return this[ Class3.prototype.foobar.name ]( ...arguments );
+    }
+}
+
+class Class31 extends Class3 {
+    foobar() {
+        var res = super.foobar( ...arguments );
+        out( '   ooo (O.O) ooo' );
+        document.body.lastChild.style.borderBottom = 'solid 1px black';
+        return res;
+    }
+}
+
+var instance3 = new Class3();
+out.json( instance3 );
+instance3.foobar();
+instance3.foobar( 1, 2, 3, 4 );
+instance3.foobar( 5, 6, "A", "C", "A", "B" );
+instance3.foobar( 7 );
+Class3.prototype.foobar.call( instance3, 'x', 'y', { answer: 'Got ya, bitch!' } );
+out( '---' );
+var instance31 = new Class31();
+out.json( instance31 );
+instance31.foobar();
+instance31.foobar( 1, 2, 3, 4 );
+instance31.foobar( 5, 6, "A", "C", "A", "B" );
+instance31.foobar( 7 );
+Class31.prototype.foobar.call( instance31, 'x', 'y', { answer: 'Got ya, bitch!' } );
 
 });
