@@ -147,13 +147,13 @@ class Class3 {
             this.timestamp = new Date();
         })();
     }
-    foobar() {
+    foobar( a, b ) {
         return this[ Class3.prototype.foobar.name ]( ...arguments );
     }
 }
 
 class Class31 extends Class3 {
-    foobar() {
+    foobar( a, b, c ) {
         var res = super.foobar( ...arguments );
         out( '   ooo (O.O) ooo' );
         document.body.lastChild.style.borderBottom = 'solid 1px black';
@@ -175,6 +175,6 @@ instance31.foobar();
 instance31.foobar( 1, 2, 3, 4 );
 instance31.foobar( 5, 6, "A", "C", "A", "B" );
 instance31.foobar( 7 );
-Class31.prototype.foobar.call( instance31, 'x', 'y', { answer: 'Got ya, bitch!' } );
+Class31.prototype.foobar.call( instance31, 'x', 'y', 'z', { answer: 'Got ya, bitch!' } );
 
 });
