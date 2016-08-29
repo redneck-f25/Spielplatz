@@ -18,7 +18,9 @@ class Mixin {
 
 class HiddenProperties extends Mixin {
     __HiddenProperties_wrapFunctions( methodNames, hiddenProperties ) {
-        var [ me, prototype ] = [ this, Object.getPrototypeOf( this ) ];
+        // var [ me, prototype ] = [ this, Object.getPrototypeOf( this ) ];
+        var me = this;
+        var prototype = Object.getPrototypeOf( this );
         
         methodNames.forEach( ( name )=>{
             Object.defineProperty( me, name, { value: function() {
@@ -51,9 +53,15 @@ class Class {
         this.timestamp = new Date();
     }
     foobar( a, b ) {
-        var [ a, b, additionalArguments, hiddenProperties ]
-            = this.__HiddenProperties_extractArguments(
-                    arguments, Class.prototype.foobar.length );
+        // var [ a, b, additionalArguments, hiddenProperties ]
+        //     = this.__HiddenProperties_extractArguments(
+        //             arguments, Class.prototype.foobar.length );
+        var res = this.__HiddenProperties_extractArguments(
+                arguments, Class.prototype.foobar.length );
+        a = res.shift();
+        b = res.shift();
+        var additionalArguments = res.shift();
+        var hiddenProperties = res.shift();
 
         var data = { a, b, additionalArguments, hiddenProperties };
         out.json( data );
@@ -176,5 +184,42 @@ instance31.foobar( 1, 2, 3, 4 );
 instance31.foobar( 5, 6, "A", "C", "A", "B" );
 instance31.foobar( 7 );
 Class31.prototype.foobar.call( instance31, 'x', 'y', 'z', { answer: 'Got ya, bitch!' } );
+
+out( '---' );
+out( '--- WeakMap ---' );
+out( '---' );
+
+var Class4 = (()=>{
+
+    var hiddenMap = new WeakMap();
+
+    class Class4 {
+        constructor() {
+            var hiddenProperties = {
+                answer: 42,
+            };
+            hiddenMap.set( this, hiddenProperties );
+        }
+        foobar( a, b ) {
+            var hiddenProperties =  hiddenMap.get( this );
+            var additionalArguments = Array.prototype.splice.call(
+                    arguments, Class4.prototype.foobar.length );
+
+            var data = { a, b, additionalArguments, hiddenProperties };
+            out.json( data );
+            ++hiddenProperties.answer;
+        }
+    };
+    return Class4;
+})();
+
+var instance4 = new Class4();
+out.json( instance4 );
+instance4.foobar();
+instance4.foobar( 1, 2, 3, 4 );
+instance4.foobar( 5, 6, "A", "C", "A", "B" );
+instance4.foobar( 7 );
+Class4.prototype.foobar.call( instance4, 'x', 'y', { answer: 'Got ya, bitch!' } );
+out( '---' );
 
 });
