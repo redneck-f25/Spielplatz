@@ -21,28 +21,50 @@ var HidingClass = ( function __module() {
     }
 
     class HidingClass {
-        constructor( clazz ) {
-            var scope = new Scope();
-            var base = clazz;
-            for (;;) {
-                let tmp = Object.getPrototypeOf( base );
-                if ( tmp === Function.prototype ) {
-                    break;
+        constructor( scope, clazz ) {
+            // optional argument 'scope'
+            if ( clazz === undefined ) {
+                // create package scope
+                if ( scope === null ) {
+                    scope = new Scope();
+                    scope.priv = new WeakMap();
+                    scope.prot = new WeakMap();
+                    return scope;
                 }
-                base = tmp;
+                clazz = scope;
+                scope = undefined;
             }
-            var baseScope = scopes.get( base );
-            if ( baseScope === undefined ) {
-                baseScope = { priv: null, prot: new WeakMap() };
-                if ( clazz !== base ) {
-                    scopes.set( base, baseScope );
+            // reuse package scope
+            if ( scope instanceof Scope ) {
+                let newScope = new Scope()
+                newScope.priv = scope.priv;
+                scope = newScope;
+            } else {
+                scope = new Scope();
+                scope.priv = new WeakMap();
+            }
+            scope.prot = (()=>{
+                var base = clazz;
+                for (;;) {
+                    let tmp = Object.getPrototypeOf( base );
+                    if ( tmp === Function.prototype ) {
+                        break;
+                    }
+                    base = tmp;
                 }
-            }
+                var baseScope = scopes.get( base );
+                if ( baseScope === undefined ) {
+                    baseScope = { priv: null, prot: new WeakMap() };
+                    if ( clazz !== base ) {
+                        scopes.set( base, baseScope );
+                    }
+                }
+                return baseScope.prot;
+            })();
+            var className = clazz.prototype.constructor.name;
             scopes.set( clazz, scope );
-            scope.priv = new WeakMap();
-            scope.prot = baseScope.prot;
-            scope.clazz = scope[ clazz.prototype.constructor.name ] = eval([
-                '( class ' + clazz.prototype.constructor.name + ' extends clazz {',
+            scope.clazz = scope[ className ] = eval([
+                '( class ' + className + ' extends clazz {',
                 '    constructor() {',
                 '        if  ( !initializing ) {',
                 '            initializing = true;',
@@ -66,6 +88,8 @@ var HidingClass = ( function __module() {
     return HidingClass;
 })();
 
+var packageScope = new HidingClass( null );
+
 var Base0 = ( function __module() {
     class Base0 {
         constructor() {
@@ -77,7 +101,7 @@ var Base0 = ( function __module() {
 })();
 
 var Base = ( function __module() {
-    var scope = new HidingClass( class Base extends Base0{
+    var scope = new HidingClass( packageScope, class Base extends Base0{
         __init__() {
             out( 'Base.__init__' );
             // var { priv, prot } = scope.get( this );
@@ -97,7 +121,7 @@ var Base = ( function __module() {
 })();
 
 var Class1 = ( function __module() {
-    var scope = new HidingClass( class Class1 extends Base {
+    var scope = new HidingClass( packageScope, class Class1 extends Base {
         __init__() {
             super.__init__();
             out( 'Class1.__init__' );
