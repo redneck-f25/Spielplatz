@@ -65,7 +65,7 @@ var HidingClass = ( function __module() {
             })();
             scopes.set( clazz, scope );
             var className = clazz.prototype.constructor.name;
-            var baseClassName = Object.getPrototypeOf( clazz ).name;
+            var baseClassName = Object.getPrototypeOf( clazz ).name || 'Object';
             scope.clazz = scope[ className ] = eval([
                 '( ' + baseClassName + ' )=>{',
                 'return class ' + className + ' extends ' + baseClassName + ' {',
@@ -94,18 +94,8 @@ var HidingClass = ( function __module() {
 
 var packageScope = new HidingClass( null );
 
-var Base0 = ( function __module() {
-    class Base0 {
-        constructor() {
-            out( 'Base0.constructor' );
-            this._00 = 0.1;
-        }
-    }
-    return Base0;
-})();
-
 var Base = ( function __module() {
-    var scope = new HidingClass( packageScope, class Base extends Base0 {
+    var scope = new HidingClass( packageScope, class Base {
         __init__() {
             out( 'Base.__init__' );
             // var { priv, prot } = scope.get( this );
