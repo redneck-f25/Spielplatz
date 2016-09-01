@@ -101,7 +101,7 @@ var Base0 = ( function __module() {
 })();
 
 var Base = ( function __module() {
-    var scope = new HidingClass( packageScope, class Base extends Base0{
+    var scope = new HidingClass( packageScope, class Base extends Base0 {
         __init__() {
             out( 'Base.__init__' );
             // var { priv, prot } = scope.get( this );
