@@ -44,27 +44,31 @@ var HidingClass = ( function __module() {
                 scope.priv = new WeakMap();
             }
             scope.prot = (()=>{
-                var base = clazz;
+                var rootClass = clazz;
                 for (;;) {
-                    let tmp = Object.getPrototypeOf( base );
+                    let tmp = Object.getPrototypeOf( rootClass );
                     if ( tmp === Function.prototype ) {
                         break;
                     }
-                    base = tmp;
+                    rootClass = tmp;
                 }
-                var baseScope = scopes.get( base );
-                if ( baseScope === undefined ) {
-                    baseScope = { priv: null, prot: new WeakMap() };
-                    if ( clazz !== base ) {
-                        scopes.set( base, baseScope );
+                var rootScope = scopes.get( rootClass );
+                if ( rootScope === undefined ) {
+                    rootScope = new Scope();
+                    rootScope.priv = null;
+                    rootScope.prot = new WeakMap();
+                    if ( clazz !== rootClass ) {
+                        scopes.set( rootClass, rootScope );
                     }
                 }
-                return baseScope.prot;
+                return rootScope.prot;
             })();
-            var className = clazz.prototype.constructor.name;
             scopes.set( clazz, scope );
+            var className = clazz.prototype.constructor.name;
+            var baseClassName = Object.getPrototypeOf( clazz ).name;
             scope.clazz = scope[ className ] = eval([
-                '( class ' + className + ' extends clazz {',
+                '( ' + baseClassName + ' )=>{',
+                'return class ' + className + ' extends ' + baseClassName + ' {',
                 '    constructor() {',
                 '        if  ( !initializing ) {',
                 '            initializing = true;',
@@ -79,8 +83,8 @@ var HidingClass = ( function __module() {
                 '            scope.prot.set( this, {} );',
                 '        }',
                 '    }',
-                '})',
-                ].join( '\n' ) );
+                '}}',
+                ].join( '\n' ) )( clazz );
             return scope;
         }
     }
