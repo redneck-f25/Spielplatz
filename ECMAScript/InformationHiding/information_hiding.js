@@ -4,6 +4,15 @@ window.addEventListener( 'load', function __window_onload( event ) {
 var out = ( text )=>( document.body.appendChild( document.createElement( 'pre' ) ).innerText = text );
 out.json = ( value, space )=>( out( JSON.stringify( value, undefined, space ) ) );
 
+var Scope = class Scope {
+    get( instance ) {
+        return {
+            priv: this.priv.get( instance ),
+            prot: this.prot.get( instance ),
+        }
+    };
+}
+
 var HidingClass = ( function __module() {
     var scopes = new Map();
     var initializing = false;
@@ -64,17 +73,19 @@ var Base0 = ( function __module() {
 })();
 
 var Base = ( function __module() {
-    var scope = {};
+    var scope = new Scope();
     var Base = new HidingClass( scope, class Base extends Base0{
         __init__() {
             out( 'Base.__init__' );
-            var [ priv, prot ] = [ scope.priv.get( this ), scope.prot.get( this ) ];
+            // var { priv, prot } = scope.get( this );
+            var thisScope = scope.get( this ), priv = thisScope.priv, prot = thisScope.prot;
             this._0 = 1;
             priv._0 = 2;
             prot._0 = 3;
         }
         foobar() {
-            var [ priv, prot ] = [ scope.priv.get( this ), scope.prot.get( this ) ];
+            // var { priv, prot } = scope.get( this );
+            var thisScope = scope.get( this ), priv = thisScope.priv, prot = thisScope.prot;
             out( 'Base.foobar' );
             out.json( { this: this, priv, prot } );
         }
@@ -83,18 +94,20 @@ var Base = ( function __module() {
 })();
 
 var Class1 = ( function __module() {
-    var scope = {};
+    var scope = new Scope();
     var Class1 = new HidingClass( scope, class Class1 extends Base {
         __init__() {
             super.__init__();
             out( 'Class1.__init__' );
-            var [ priv, prot ] = [ scope.priv.get( this ), scope.prot.get( this ) ];
+            // var { priv, prot } = scope.get( this );
+            var thisScope = scope.get( this ), priv = thisScope.priv, prot = thisScope.prot;
             this._1 = 11;
             priv._1 = 12;
             prot._1 = 13;
         }
         foobar() {
-            var [ priv, prot ] = [ scope.priv.get( this ), scope.prot.get( this ) ];
+            // var { priv, prot } = scope.get( this );
+            var thisScope = scope.get( this ), priv = thisScope.priv, prot = thisScope.prot;
             super.foobar();
             out( 'Class1.foobar' );
             out.json( { this: this, priv, prot } );
@@ -125,18 +138,20 @@ var Class2 = ( function __module() {
 })();
 
 var Class3 = ( function __module() {
-    var scope = {};
+    var scope = new Scope();
     var Class3 = new HidingClass( scope, class Class3 extends Class2 {
         __init__() {
             super.__init__();
             out( 'Class3.__init__' );
-            var [ priv, prot ] = [ scope.priv.get( this ), scope.prot.get( this ) ];
+            // var { priv, prot } = scope.get( this );
+            var thisScope = scope.get( this ), priv = thisScope.priv, prot = thisScope.prot;
             this._3 = 31;
             priv._3 = 32;
             prot._3 = 33;
         }
         foobar() {
-            var [ priv, prot ] = [ scope.priv.get( this ), scope.prot.get( this ) ];
+            // var { priv, prot } = scope.get( this );
+            var thisScope = scope.get( this ), priv = thisScope.priv, prot = thisScope.prot;
             super.foobar();
             out( 'Class1.foobar' );
             out.json( { this: this, priv, prot } );
