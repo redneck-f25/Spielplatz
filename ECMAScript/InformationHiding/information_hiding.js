@@ -4,21 +4,22 @@ window.addEventListener( 'load', function __window_onload( event ) {
 var out = ( text )=>( document.body.appendChild( document.createElement( 'pre' ) ).innerText = text );
 out.json = ( value, space )=>( out( JSON.stringify( value, undefined, space ) ) );
 
-var Scope = class Scope {
-    get( instance ) {
-        return {
-            priv: this.priv.get( instance ),
-            prot: this.prot.get( instance ),
-        }
-    };
-}
-
 var HidingClass = ( function __module() {
     var scopes = new Map();
     var initializing = false;
 
+    var Scope = class Scope {
+        get( instance ) {
+            return {
+                priv: this.priv.get( instance ),
+                prot: this.prot.get( instance ),
+            }
+        };
+    }
+
     class HidingClass {
-        constructor( scope, clazz ) {
+        constructor( clazz ) {
+            var scope = new Scope( clazz );
             var base = clazz;
             for (;;) {
                 let tmp = Object.getPrototypeOf( base );
@@ -55,7 +56,10 @@ var HidingClass = ( function __module() {
                 '    }',
                 '})',
                 ].join( '\n' ) );
-            return clazz;
+            scope.scope = scope;
+            scope.clazz = clazz;
+            scope[ clazz.prototype.constructor.name ] = clazz;
+            return scope;
         }
     }
 
@@ -73,8 +77,7 @@ var Base0 = ( function __module() {
 })();
 
 var Base = ( function __module() {
-    var scope = new Scope();
-    var Base = new HidingClass( scope, class Base extends Base0{
+    var scope = new HidingClass( class Base extends Base0{
         __init__() {
             out( 'Base.__init__' );
             // var { priv, prot } = scope.get( this );
@@ -90,12 +93,11 @@ var Base = ( function __module() {
             out.json( { this: this, priv, prot } );
         }
     });
-    return Base;
+    return scope.Base;
 })();
 
 var Class1 = ( function __module() {
-    var scope = new Scope();
-    var Class1 = new HidingClass( scope, class Class1 extends Base {
+    var scope = new HidingClass( class Class1 extends Base {
         __init__() {
             super.__init__();
             out( 'Class1.__init__' );
@@ -113,7 +115,7 @@ var Class1 = ( function __module() {
             out.json( { this: this, priv, prot } );
         }
     });
-    return Class1;
+    return scope.Class1;
 })();
 
 var Class2 = ( function __module() {
@@ -138,8 +140,7 @@ var Class2 = ( function __module() {
 })();
 
 var Class3 = ( function __module() {
-    var scope = new Scope();
-    var Class3 = new HidingClass( scope, class Class3 extends Class2 {
+    var scope = new HidingClass( class Class3 extends Class2 {
         __init__() {
             super.__init__();
             out( 'Class3.__init__' );
@@ -157,7 +158,7 @@ var Class3 = ( function __module() {
             out.json( { this: this, priv, prot } );
         }
     });
-    return Class3;
+    return scope.Class3;
 })();
 
 var instance = new Class3();
