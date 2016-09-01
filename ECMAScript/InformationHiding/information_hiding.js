@@ -8,7 +8,10 @@ var HidingClass = ( function __module() {
     var scopes = new Map();
     var initializing = false;
 
-    var Scope = class Scope {
+    class Scope {
+        constructor() {
+            this.scope = this;
+        }
         get( instance ) {
             return {
                 priv: this.priv.get( instance ),
@@ -19,7 +22,7 @@ var HidingClass = ( function __module() {
 
     class HidingClass {
         constructor( clazz ) {
-            var scope = new Scope( clazz );
+            var scope = new Scope();
             var base = clazz;
             for (;;) {
                 let tmp = Object.getPrototypeOf( base );
@@ -35,10 +38,10 @@ var HidingClass = ( function __module() {
                     scopes.set( base, baseScope );
                 }
             }
+            scopes.set( clazz, scope );
             scope.priv = new WeakMap();
             scope.prot = baseScope.prot;
-            scopes.set( clazz, scope );
-            clazz = eval([
+            scope.clazz = scope[ clazz.prototype.constructor.name ] = eval([
                 '( class ' + clazz.prototype.constructor.name + ' extends clazz {',
                 '    constructor() {',
                 '        if  ( !initializing ) {',
@@ -56,9 +59,6 @@ var HidingClass = ( function __module() {
                 '    }',
                 '})',
                 ].join( '\n' ) );
-            scope.scope = scope;
-            scope.clazz = clazz;
-            scope[ clazz.prototype.constructor.name ] = clazz;
             return scope;
         }
     }
