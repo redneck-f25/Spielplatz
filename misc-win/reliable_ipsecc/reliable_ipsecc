@@ -35,18 +35,18 @@ throbber_stop() {
 
 log_begin() {
     msg="$( date +'%FT%T%z' ): $@"
-    echo -n "${msg} " | tee -a ${LOGFILE}
+    echo -ne "${msg} " | tee -a ${LOGFILE}
     throbber_start
 }
 
 log_end() {
     throbber_stop
     msg="$@"
-    echo "${msg} " | tee -a ${LOGFILE}
+    echo -ne "${msg}\r\n" | tee -a ${LOGFILE}
 }
 
 connect_and_watch() {
-    log_begin "Try to reach '${REMOTE_HOST}'"
+    log_begin "Try to reach ${REMOTE_HOST}"
     failsafe=${WAIT_REMOTE_HOST}
     success=false
     while (( failsafe-- )); do
@@ -109,6 +109,7 @@ connect_and_watch() {
         fi
         sleep ${WATCH_DELAY}
     done
+    log_end " [FAILED]"
     return 1
 }
 
@@ -122,7 +123,14 @@ kill_ipsecc() {
     fi &>/dev/null
 }
 
-trap 'kill_ipsecc; throbber_stop; log_end; exit' INT
+abort() {
+    echo -n "" # don't know why
+    log_end "[ABORTED]"
+    kill_ipsecc
+    exit
+}
+
+trap abort INT TERM
 
 while :; do
     connect_and_watch || kill_ipsecc
