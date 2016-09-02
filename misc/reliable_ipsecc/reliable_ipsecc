@@ -1,0 +1,132 @@
+#!/bin/bash
+
+set -ue
+
+which cygstart &>/dev/null || PATH=/usr/local/bin:/usr/bin:/bin:$PATH
+
+. config
+. .credentials
+
+LOGFILE=$( basename "$0" )
+LOGFILE=${LOGFILE%.*}.log
+
+throbber_start() {
+    c=-1
+    echo -n "[ ] "
+    while :; do
+        case $(( ++c % 4 )) in
+            0) char="/"; c=0;;
+            1) char="-";;
+            2) char="\\";;
+            3) char="|";;
+        esac
+        echo -ne "\b\b\b${char}] "
+        sleep ${1:-0.5}
+    done &
+    throbber_pid=$!
+}
+
+throbber_stop() {
+    kill "${throbber_pid}" &>/dev/null
+    wait "${throbber_pid}" &>/dev/null || true
+    throbber_pid=
+    echo -ne "\b\b\b\b    \b\b\b\b"
+}
+
+log_begin() {
+    msg="$( date +'%FT%T%z' ): $@"
+    echo -n "${msg} " | tee -a ${LOGFILE}
+    throbber_start
+}
+
+log_end() {
+    throbber_stop
+    msg="$@"
+    echo "${msg} " | tee -a ${LOGFILE}
+}
+
+connect_and_watch() {
+    log_begin "Try to reach '${REMOTE_HOST}'"
+    failsafe=${WAIT_REMOTE_HOST}
+    success=false
+    while (( failsafe-- )); do
+        if ping -w 2 -n 2 "${REMOTE_HOST}"&>/dev/null; then
+            success=true
+            break
+        fi
+        sleep 2
+    done
+    if [ "${success}" != "true" ]; then
+        log_end " [FAILED]"
+        return 1
+    fi
+    log_end "[SUCCEEDED]"
+    
+    log_begin "Start connection ${VPN_CONNECTION}"
+    "${IPSECC}" -a -r "${VPN_CONNECTION}" -u "${VPN_USER}" -p "${VPN_PASSWORD}" &
+    ipsecc_pid=$!
+    ipsecc_winpid=$( cat /proc/${ipsecc_pid}/winpid )
+    ipsecc_exe=$( cat /proc/$ipsecc_pid/exename )
+    failsafe=${WAIT_CONNECT}
+    success=false
+    while (( failsafe-- )); do
+        if route -4 print | grep -P "^\s*${VPN_NETWORK}\s+${VPN_NETMASK}" &>/dev/null; then
+            success=true
+            break
+        fi
+        sleep 2
+    done
+    if [ "${success}" != "true" ]; then
+        log_end " [FAILED]"
+        return 1
+    fi
+    log_end "[SUCCEEDED]"
+    
+    log_begin "Wait for ${VPN_HOST} at ${VPN_NETWORK}/${VPN_NETMASK}"
+    failsafe=${WAIT_NETWORK}
+    success=false
+    while (( failsafe-- )); do
+        if ping -w 2 -n 2 "${VPN_HOST}" &>/dev/null; then
+            success=true
+            break
+        fi
+        sleep 2
+    done
+    if [ "${success}" != "true" ]; then
+        log_end "[FAILED]"
+        return 1
+    fi
+    log_end "[SUCCEEDED]"
+    
+    log_begin "Watching connection"
+    failcount=0
+    while :; do
+        if ping -w 2 -n 2 "${VPN_HOST}" &>/dev/null; then
+            failcount=0
+        elif (( ++failcount == ${WATCH_MAX_FAILCOUNT} )); then
+            log_end "[FAILED]"
+            break
+        fi
+        sleep ${WATCH_DELAY}
+    done
+    return 1
+}
+
+kill_ipsecc() {
+    if [ "$( cat /proc/$ipsecc_pid/exename )" == "${ipsecc_exe}" ]; then
+        kill "${ipsecc_pid}"
+        wait ${ipsecc_pid} || true
+        # double kill
+        sleep 0.5
+        taskkill -f -pid "${ipsecc_winpid}" || true
+    fi &>/dev/null
+}
+
+trap 'kill_ipsecc; throbber_stop; log_end; exit' INT
+
+while :; do
+    connect_and_watch || kill_ipsecc
+    log_begin "Wait to reconnect"
+    sleep ${RECONNECT_DELAY}
+    log_end ""
+done
