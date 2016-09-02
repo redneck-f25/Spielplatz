@@ -10,6 +10,8 @@ which cygstart &>/dev/null || PATH=/usr/local/bin:/usr/bin:/bin:$PATH
 LOGFILE=$( basename "$0" )
 LOGFILE=${LOGFILE%.*}.log
 
+connected=
+
 throbber_start() {
     c=-1
     echo -n "[ ] "
@@ -27,8 +29,7 @@ throbber_start() {
 }
 
 throbber_stop() {
-    kill "${throbber_pid}" &>/dev/null
-    wait "${throbber_pid}" &>/dev/null || true
+    { kill "${throbber_pid}" && wait "${throbber_pid}" || true; } &>/dev/null
     throbber_pid=
     echo -ne "\b\b\b\b    \b\b\b\b"
 }
@@ -98,6 +99,9 @@ connect_and_watch() {
     fi
     log_end "[SUCCEEDED]"
     
+    connected=1
+    [ "${CONNECT_COMMAND}" ] && { ( ${CONNECT_COMMAND} )& disown; }
+    
     log_begin "Watching connection"
     failcount=0
     while :; do
@@ -109,23 +113,29 @@ connect_and_watch() {
         fi
         sleep ${WATCH_DELAY}
     done
-    log_end " [FAILED]"
+    
+    connected=
+    [ "${DISCONNECT_COMMAND}" ] && { ( ${DISCONNECT_COMMAND} )& disown; }
+    
     return 1
 }
 
 kill_ipsecc() {
     if [ "$( cat /proc/$ipsecc_pid/exename )" == "${ipsecc_exe}" ]; then
-        kill "${ipsecc_pid}"
-        wait ${ipsecc_pid} || true
+        { kill "${ipsecc_pid}" && wait ${ipsecc_pid} || true; }
         # double kill
         sleep 0.5
         taskkill -f -pid "${ipsecc_winpid}" || true
+        ipsecc_pid=
     fi &>/dev/null
 }
 
 abort() {
-    echo -n "" # don't know why
-    log_end "[ABORTED]"
+    log_end "[ABORTED]" || true
+    if (( connected )) && [ "${DISCONNECT_COMMAND}" ]; then
+        ( ${DISCONNECT_COMMAND} )&
+        disown
+    fi
     kill_ipsecc
     exit
 }
