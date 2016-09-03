@@ -4,6 +4,7 @@ set -ue
 
 which cygstart &>/dev/null || PATH=/usr/local/bin:/usr/bin:/bin:$PATH
 
+SCRIPTDIR=$( dirname $0 )
 SCRIPTNAME=$( basename $0 )
 SCRIPTBASENAME="${SCRIPTNAME%.*sh}"
 
@@ -64,9 +65,13 @@ connect_and_watch() {
     
     log_begin "Start connection ${VPN_CONNECTION}"
     eval "${IPSECC_COMMAND}" &
-    ipsecc_pid=$!
-    ipsecc_winpid=$( cat /proc/${ipsecc_pid}/winpid )
-    ipsecc_exe=$( cat /proc/$ipsecc_pid/exename )
+    #ipsecc_pid=$( ps | grep -P '\s*\d+\s+'"$!"'(\s+\S+){5}\s+/cygdrive.*ipsecc' | grep -oP '^\s*\d+' )
+    {
+        ipsecc_pid=$( pstree -p $! | grep -oP '\(\d+\)$' | grep -oP '\d+' )
+        ipsecc_winpid=$( cat /proc/${ipsecc_pid}/winpid )
+        ipsecc_exe=$( cat /proc/$ipsecc_pid/exename )
+    }  2>/dev/null
+    eval "${IPSECC_CREDENTIALS_COMMAND}" || abort
     failsafe=${WAIT_CONNECT}
     success=false
     while (( failsafe-- )); do
