@@ -4,11 +4,10 @@ set -ue
 
 which cygstart &>/dev/null || PATH=/usr/local/bin:/usr/bin:/bin:$PATH
 
-. config
-. .credentials
+SCRIPTNAME=$( basename $0 )
+SCRIPTBASENAME="${SCRIPTNAME%.*sh}"
 
-LOGFILE=$( basename "$0" )
-LOGFILE=${LOGFILE%.*}.log
+. "${SCRIPTBASENAME}.conf"
 
 connected=
 
@@ -64,14 +63,14 @@ connect_and_watch() {
     log_end "[SUCCEEDED]"
     
     log_begin "Start connection ${VPN_CONNECTION}"
-    "${IPSECC}" -a -r "${VPN_CONNECTION}" -u "${VPN_USER}" -p "${VPN_PASSWORD}" &
+    eval "${IPSECC_COMMAND}" &
     ipsecc_pid=$!
     ipsecc_winpid=$( cat /proc/${ipsecc_pid}/winpid )
     ipsecc_exe=$( cat /proc/$ipsecc_pid/exename )
     failsafe=${WAIT_CONNECT}
     success=false
     while (( failsafe-- )); do
-        if route -4 print | grep -P "^\s*${VPN_NETWORK}\s+${VPN_NETMASK}" &>/dev/null; then
+        if route -4 print | grep -P "^\s*${VPN_NETWORK}\s+${VPN_NETMASK}\D+\d+(\.\d+){3}\s" &>/dev/null; then
             success=true
             break
         fi
@@ -83,7 +82,12 @@ connect_and_watch() {
     fi
     log_end "[SUCCEEDED]"
     
-    log_begin "Wait for ${VPN_HOST} at ${VPN_NETWORK}/${VPN_NETMASK}"
+    read _ _ _ _ VPN_IP4ADDR _ < <( route print -4 | grep -P '^\s*172.19.0.0\s+255.255.255.0' )
+    
+    connected=1
+    [ "${CONNECT_COMMAND}" ] && ( eval "${CONNECT_COMMAND}" )
+    
+    log_begin "Wait for ${VPN_HOST} at ${VPN_NETWORK}/${VPN_PREFIXLEN}"
     failsafe=${WAIT_NETWORK}
     success=false
     while (( failsafe-- )); do
@@ -99,10 +103,7 @@ connect_and_watch() {
     fi
     log_end "[SUCCEEDED]"
     
-    connected=1
-    [ "${CONNECT_COMMAND}" ] && { ( ${CONNECT_COMMAND} )& disown; }
-    
-    log_begin "Watching connection"
+    log_begin "Watching connection on iface ${VPN_IP4ADDR}"
     failcount=0
     while :; do
         if ping -w 2 -n 2 "${VPN_HOST}" &>/dev/null; then
@@ -115,7 +116,7 @@ connect_and_watch() {
     done
     
     connected=
-    [ "${DISCONNECT_COMMAND}" ] && { ( ${DISCONNECT_COMMAND} )& disown; }
+    [ "${DISCONNECT_COMMAND}" ] && ( eval "${DISCONNECT_COMMAND}" )
     
     return 1
 }
@@ -133,7 +134,7 @@ kill_ipsecc() {
 abort() {
     log_end "[ABORTED]" || true
     if (( connected )) && [ "${DISCONNECT_COMMAND}" ]; then
-        ( ${DISCONNECT_COMMAND} )&
+        ( eval "${DISCONNECT_COMMAND}" )
         disown
     fi
     kill_ipsecc
