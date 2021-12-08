@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en" class="no-js">
+<head>
+<title>...</title>
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<style>
+html, body, iframe {
+  box-sizing: border-box;
+  width: 100%;
+  height: 100%;
+  border: 0;
+  margin: 0;
+  padding: 0;
+}
+body {
+  overflow: hidden;
+}
+#toolbar, #statusbar {
+  position: absolute;
+  width: 100%;
+  background: threedface;
+  padding: 3px;
+  min-height: calc( 1em + 6px );
+}
+#toolbar { top: 0; }
+#statusbar { bottom: 0; }
+</style>
+<script>
+;( function() {
+'use strict';
+var WshShell = new ActiveXObject( 'WScript.Shell' );
+var WMI = new ActiveXObject( 'WbemScripting.SWbemLocator' ).ConnectServer( '.', '\\root\\cimv2' );
+if ( location.hash === '#ef3804df980a34e0e59c8b9f225805a115cac355') {
+  for ( ;; ) {
+    WMI.ExecNotificationQuery( 'select * from __InstanceDeletionEvent within 86400 where TargetInstance isa "Win32_OperatingSystem"' ).NextEvent();
+  }
+}
+var processId;
+var commandLine;
+for ( var _item, _enum = new Enumerator( WMI.ExecQuery( 'select * from Win32_Process where ProcessId = ' + WshShell.Exec( '%SystemRoot%\\System32\\mshta.exe ' + location.href.match( /^(.*?)([?#]|$)/ )[ 1 ] + '#ef3804df980a34e0e59c8b9f225805a115cac355' ).ProcessId ) ); ( !_enum.atEnd() ) && ( _item = _enum.item() ); _enum.moveNext() ) {
+  processId = _item.ParentProcessId;
+  _item.Terminate();
+}
+for ( var _item, _enum = new Enumerator( WMI.ExecQuery( 'select * from Win32_Process where ProcessId = ' + processId ) ); ( !_enum.atEnd() ) && ( _item = _enum.item() ); _enum.moveNext() ) {
+  commandLine = _item.CommandLine;
+}
+var m = commandLine.match( /^(?:"([^"]+?)"|([^"]\S*))\s+(.*)/ );
+var argv = [ m[ 1 ] || m[ 2 ] ].concat( m[ 3 ].split( / +/ ) );
+var $$iframe, $$toolbar, $$statusbar;
+window.addEventListener( 'load', function( evt ) {
+  ( $$iframe = document.querySelector( 'iframe' ) ).src = argv[ 2 ];
+  $$toolbar = document.querySelector( '#toolbar' );
+  $$statusbar = document.querySelector( '#statusbar' );
+  window.addEventListener( 'resize', function( evt ) {
+    document.body.style.paddingTop = $$toolbar.offsetHeight + 'px';
+    document.body.style.paddingBottom = $$statusbar.offsetHeight + 'px';
+  });
+  document.body.style.paddingTop = $$toolbar.offsetHeight + 'px';
+  document.body.style.paddingBottom = $$statusbar.offsetHeight + 'px';
+});
+})();
+</script>
+</head>
+<body>
+<div id="toolbar"></div>
+<div id="statusbar"></div>
+<iframe application="yes"></iframe>
+</body>
+</html>
