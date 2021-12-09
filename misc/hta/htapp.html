@@ -48,15 +48,20 @@ var m = commandLine.match( /^(?:"([^"]+?)"|([^"]\S*))\s+(.*)/ );
 var argv = [ m[ 1 ] || m[ 2 ] ].concat( m[ 3 ].split( / +/ ) );
 var $$iframe, $$toolbar, $$statusbar;
 window.addEventListener( 'load', function( evt ) {
-  ( $$iframe = document.querySelector( 'iframe' ) ).src = argv[ 2 ];
+  $$iframe = document.querySelector( 'iframe' );
   $$toolbar = document.querySelector( '#toolbar' );
   $$statusbar = document.querySelector( '#statusbar' );
-  window.addEventListener( 'resize', function( evt ) {
+  window.addEventListener( 'resize', ( function() { function _( evt ) {
     document.body.style.paddingTop = $$toolbar.offsetHeight + 'px';
     document.body.style.paddingBottom = $$statusbar.offsetHeight + 'px';
+  }; return ( _(), _ ); })());
+  var $$reload_button = document.createElement( 'button' );
+  $$reload_button.textContent = 'reload';
+  $$reload_button.addEventListener( 'click', function() {
+    location.reload();
   });
-  document.body.style.paddingTop = $$toolbar.offsetHeight + 'px';
-  document.body.style.paddingBottom = $$statusbar.offsetHeight + 'px';
+  $$toolbar.appendChild( $$reload_button );
+  $$iframe.src = argv[ 2 ];
 });
 })();
 </script>
