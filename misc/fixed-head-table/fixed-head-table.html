@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Fixed-Head Table</title>
+    <style>
+      .tableFixHead {
+        position: absolute;
+        top: 20%;
+        bottom: 20%;
+        left: 20%;
+        right: 20%;
+        overflow-y: auto;
+        background: #f8f8f8;
+      }
+      thead th {
+        background: #ccc;
+      }
+      tbody {
+        background: #fff;
+      }
+      tbody tr:nth-child(even) {
+        background: #eee;
+      }
+      thead th {
+        position: sticky;
+        top: 0;
+      }
+      table {
+        border-collapse: collapse;
+        width: 100%;
+      }
+      th,
+      td {
+        padding: 8px 16px;
+      }
+      tfoot td {
+        padding: 0;
+      }
+      /*
+      .tableFixHead,
+      td {
+        box-shadow: inset 1px -1px #000;
+      }
+      th {
+        box-shadow: inset 1px 1px #000, 0 1px #000;
+      }
+      */
+    </style>
+    <script>
+    addEventListener( 'load', function() {
+      var table = document.querySelector( '.tableFixHead > table' );
+      var tbody = table.tBodies[ 0 ];
+      var num_columns = table.tHead.rows[0].cells.length;
+      var num_rows = +( location.search + '&rows=30' ).match(/(?:(?:^\?|&)rows=(\d+))/)[ 1 ];
+      var pager = document.querySelector( 'select' );
+      for ( var ii = 1; ii <= num_rows; ++ii ) {
+        var option = document.createElement( 'option' );
+        option.textContent = ii;
+        pager.options.add( option )
+        var row = tbody.insertRow();
+        row.dataset.row = ii;
+        for ( var ij = 1; ij <= num_columns; ++ij ) {
+          var cell = row.insertCell();
+          cell.textContent = '' + ij + '.' + ii;
+        }
+      }
+      var footer_cell = table.tFoot.rows[ 0 ].cells[ 0 ];
+      footer_cell.colSpan = num_columns;
+      footer_cell.style.height = ( 1 + table.parentElement.clientHeight - table.tHead.rows[ 0 ].offsetHeight - tbody.rows[ num_rows - 1 ].offsetHeight ) + 'px';
+      pager.addEventListener( 'change', function() {
+        var row = tbody.rows[ this.value - 1 ];
+        table.parentElement.scrollTop = row.offsetTop - table.tHead.rows[ 0 ].clientHeight;
+      } );
+      /*
+      var num_pages = Math.round( 0.5 + ( table.clientHeight - table.tHead.clientHeight ) / ( table.parentElement.clientHeight - table.tHead.clientHeight ) );
+      var rows_per_page = Math.round( -0.5 + ( table.parentElement.clientHeight - table.tHead.rows[ 0 ].clientHeight ) / tbody.rows[ 0 ].clientHeight );
+      for ( var ii = 1; ii <= num_pages; ++ii ) {
+        var option = document.createElement( 'option' );
+        option.textContent = ii;
+        pager.options.add( option )
+      }
+      pager.addEventListener( 'change', function() {
+        var target_row_num = rows_per_page * ( this.value - 1 );
+        var target_y = target_row_num * tbody.rows[ 0 ].clientHeight;
+        table.parentElement.scrollTop = target_y;
+      } );
+      */
+    });
+    </script>
+  </head>
+  <body>
+    <div>
+      <span>rows:</span>
+      <a href="?rows=4">4</a>
+      <a href="?rows=5">5</a>
+      <a href="?rows=20">20</a>
+      <a href="?rows=50">50</a>
+      <a href="?rows=100">100</a>
+      <span>row:</span>
+      <select></select>
+    </div>
+    <div class="tableFixHead">
+      <table>
+        <thead><tr><th>Col 1</th><th>Col 2</th><th>Col 3</th></tr></thead>
+        <tbody></tbody>
+        <tfoot><tr><td></td></tr></tfoot>
+      </table>
+    </div>
+  </body>
+</html>
