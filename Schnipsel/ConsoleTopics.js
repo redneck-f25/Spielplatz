@@ -1,11 +1,13 @@
 (()=>{'use strict';
 
 [ 'log', 'info', 'warn', 'error' ].forEach( ( methodName ) => {
-  const nativeMethod = console[ methodName ];
+  if ( ( console.native === undefined ? console.native = {} : console.native )[ methodName ] === undefined ) {
+    console.native[ methodName ] = console[ methodName ];
+  }
   console[ methodName + 'Topic' ] = ( topic, ...args ) => {
     let topics = sessionStorage.__debug_ConsoleTopics;
     if ( !topics ) {
-      nativeMethod( ...args );
+      console.native[ methodName ]( ...args );
       return;
     }
     if ( topics[ 0 ] !== ',' ) {
@@ -20,7 +22,7 @@
       topics = sessionStorage.__debug_ConsoleTopics = topics + ',';
     }
     if ( topics.indexOf( ',' + topic + ',' ) >= 0 ) {
-      nativeMethod( ...args );
+      console.native[ methodName ]( ...args );
     }
   }
   console[ methodName ] = console[ methodName + 'Topic' ].bind( undefined, undefined );
