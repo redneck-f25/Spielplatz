@@ -1,3 +1,5 @@
+(()=>{'use strict';
+
 [ 'log', 'info', 'warn', 'error' ].forEach( ( methodName ) => {
   const nativeMethod = console[ methodName ];
   console[ methodName + 'Topic' ] = ( topic, ...args ) => {
@@ -23,3 +25,5 @@
   }
   console[ methodName ] = console[ methodName + 'Topic' ].bind( undefined, undefined );
 });
+
+})();

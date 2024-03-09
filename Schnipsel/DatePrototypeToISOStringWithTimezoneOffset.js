@@ -1,3 +1,5 @@
+(()=>{'use strict';
+
 /***
 * new Date().toISOString( { withLocalTimezoneOffset: true } )
 * new Date().toISOString( { withTimezoneOffset: true } )
@@ -45,4 +47,6 @@ Date.prototype.toISOString = ( () => {
       return DatePrototypeToISOString.apply( this, arguments );
     }
   }
+})();
+
 })();
