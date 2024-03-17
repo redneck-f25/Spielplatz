@@ -1,7 +1,5 @@
 (()=>{'use strict';
 
-const global = (()=>(this))();
-
 const httpSchemeRegExp = /^http/;
 const websocketScheme = 'ws';
   
@@ -41,7 +39,7 @@ const WebSocketWard = (() => ( class WebSocket extends EventTarget {
   
 }))();
 
-global.WebSocket = (() => ( class WebSocketGuardian extends WebSocket {
+globalThis.WebSocket = (() => ( class WebSocketGuardian extends WebSocket {
   static ArrayProxy = class ArrayProxy extends Array {
     send    ( data )         { this.at( 0 ).send( data ); }
     sendAll ( data )         { this.forEach( ( x ) => { x.readyState === WebSocket.OPEN && x.send( data ); } ) }
