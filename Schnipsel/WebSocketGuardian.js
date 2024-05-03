@@ -39,6 +39,11 @@ const WebSocketWard = (() => ( class WebSocket extends EventTarget {
   
 }))();
 
+if ( globalThis._f8ade94f8c74ef1f8a3c0f28d55a6a3eb24389c0 !== undefined ) {
+  globalThis.WebSocket = _f8ade94f8c74ef1f8a3c0f28d55a6a3eb24389c0;
+  delete globalThis._f8ade94f8c74ef1f8a3c0f28d55a6a3eb24389c0;
+}
+
 if ( globalThis._Constructor_f8ade94f8c74ef1f8a3c0f28d55a6a3eb24389c0 !== undefined ) {
   globalThis.WebSocket = _Constructor_f8ade94f8c74ef1f8a3c0f28d55a6a3eb24389c0;
   delete globalThis._Constructor_f8ade94f8c74ef1f8a3c0f28d55a6a3eb24389c0;
