@@ -165,9 +165,11 @@ globalThis.WebSocket = (() => ( class WebSocketGuardian extends WebSocket {
   }
   #guardedOnSendMessage ( event ) {
     this.moments.send = new Date();
-    WebSocketGuardian.onSendMessage( event );
-    if ( event.defaultPrevented ) {
-      return;
+    if ( WebSocketGuardian.onSendMessage !== undefined ) {
+      WebSocketGuardian.onSendMessage( event );
+      if ( event.defaultPrevented ) {
+        return;
+      }
     }
     super.send( event.data )
   }
