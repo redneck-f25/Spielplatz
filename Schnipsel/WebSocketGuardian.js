@@ -149,7 +149,7 @@ globalThis.WebSocket = (() => ( class WebSocketGuardian extends WebSocket {
       let originalEvent = event;
       event = new WebSocketGuardian.#GuardedMessageEvent( originalEvent.type, originalEvent );
       event.originalEvent = originalEvent;
-      originalEvent.target.ward.dispatchEvent( event );
+      originalEvent.target.dispatchEvent( event );
     }
     else {
       if ( WebSocketGuardian.onRecvMessage !== undefined ) {
