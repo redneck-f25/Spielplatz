@@ -35,7 +35,6 @@ Date.prototype.toISOString = ( function () {
       return _toISOStringWithTimezoneOffset( this, tzo );
     }
     else if ( options.withTimezoneOffset !== undefined ) {
-      var tzoMatch = ( '+' + ( options.withTimezoneOffset ).toString() ).match( tzoRegExp );
       if (options.withTimezoneOffset === lastTzoOption) {
         return _toISOStringWithTimezoneOffset( this, lastTzo );
       }
