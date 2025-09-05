@@ -3,7 +3,6 @@
 /***
 * @source: https://github.com/redneck-f25/Spielplatz/blob/master/Schnipsel/DatePrototypeToISOStringWithTimezoneOffset.js
 * new Date().toISOString( { withLocalTimezoneOffset: true } )
-* new Date().toISOString( { withTimezoneOffset: true } )
 * new Date().toISOString( { withTimezoneOffset: 0 } )
 * new Date().toISOString( { withTimezoneOffset: 100 } )
 * new Date().toISOString( { withTimezoneOffset: '+01:00' } )
